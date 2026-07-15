@@ -14,6 +14,7 @@ export type ConversationListItem = {
     updatedAt: Date;
 };
 
+
 async function assertOwnsConversation(conversationId: string, userId: string) {
     const conversation = await prisma.conversation.findFirst({
         where: {
@@ -28,6 +29,12 @@ async function assertOwnsConversation(conversationId: string, userId: string) {
 
     return conversation
 }
+
+export async function getConversation(conversationId: string) {
+    const user = await requireUser();
+    return assertOwnsConversation(conversationId, user.id)
+}
+
 
 export async function listConversations(): Promise<ConversationListItem[]> {
     const user = await requireUser();
@@ -61,24 +68,24 @@ export async function createConversation(title = "New Chat") {
 export async function updateConversation(
     conversationId: string,
     data: { title?: string; isPinned?: boolean; isArchived?: boolean }
-  ) {
+) {
     const user = await requireUser();
     await assertOwnsConversation(conversationId, user.id);
-  
+
     const conversation = await prisma.conversation.update({
-      where: { id: conversationId },
-      data: {
-        ...(data.title !== undefined ? { title: data.title.trim() || "New Chat" } : {}),
-        ...(data.isPinned !== undefined ? { isPinned: data.isPinned } : {}),
-        ...(data.isArchived !== undefined ? { isArchived: data.isArchived } : {}),
-      },
+        where: { id: conversationId },
+        data: {
+            ...(data.title !== undefined ? { title: data.title.trim() || "New Chat" } : {}),
+            ...(data.isPinned !== undefined ? { isPinned: data.isPinned } : {}),
+            ...(data.isArchived !== undefined ? { isArchived: data.isArchived } : {}),
+        },
     });
-  
+
     revalidatePath("/");
     revalidatePath(`/c/${conversationId}`);
     return conversation;
-  }
-  
+}
+
 
 
 export async function deleteConversation(conversationId: string) {
