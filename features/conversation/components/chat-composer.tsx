@@ -18,6 +18,7 @@ type ChatComposerProps = {
   placeholder?: string;
   className?: string;
   autoFocus?: boolean;
+  disabled?: boolean;
 };
 
 /**
@@ -29,6 +30,7 @@ export function ChatComposer({
   placeholder = "Message ChaiGPT…",
   className,
   autoFocus = false,
+  disabled = false,
 }: ChatComposerProps) {
   const [value, setValue] = React.useState("");
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -43,7 +45,7 @@ export function ChatComposer({
   async function handleSubmit(event?: React.FormEvent) {
     event?.preventDefault();
     const content = value.trim();
-    if (!content || isSending) return;
+    if (!content || isSending || disabled) return;
 
     setValue("");
     await onSend(content);
@@ -58,7 +60,7 @@ export function ChatComposer({
     }
   }
 
-  const canSend = value.trim().length > 0 && !isSending;
+  const canSend = value.trim().length > 0 && !isSending && !disabled;
 
   return (
     <form
@@ -72,7 +74,7 @@ export function ChatComposer({
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          disabled={isSending}
+          disabled={isSending || disabled}
           rows={1}
           className="max-h-48 min-h-12 py-3.5 pl-4 text-[15px] leading-relaxed"
         />
@@ -90,7 +92,9 @@ export function ChatComposer({
         </InputGroupAddon>
       </InputGroup>
       <p className="mt-2 text-center text-xs text-muted-foreground">
-        ChaiGPT can make mistakes. Check important info.
+        {disabled
+          ? "You can only send 8 messages per conversation."
+          : "ChaiGPT can make mistakes. Check important info."}
       </p>
     </form>
   );

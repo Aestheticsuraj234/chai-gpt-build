@@ -1,6 +1,7 @@
 "use server";
 
 import { requireUser } from "@/features/auth/action/require-user";
+import { createMainBranch, getMainBranch } from "@/features/branch/actions/branch-actions";
 import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
@@ -78,12 +79,30 @@ export async function listConversations(): Promise<ConversationListItem[]> {
 export async function createConversation(title = "New Chat") {
     const user = await requireUser();
 
-    return prisma.conversation.create({
-        data: {
-            userId: user.id,
-            title: title.trim() || "New Chat",
-        },
-    });
+    // return prisma.conversation.create({
+    //     data: {
+    //         userId: user.id,
+    //         title: title.trim() || "New Chat",
+    //     },
+    // });
+    return prisma.$transaction(async (tx) => {
+        const conversation = await tx.conversation.create({
+            data: {
+                userId: user.id,
+                title: title.trim() || "New Chat"
+            }
+        })
+
+        await tx.branch.create({
+            data: {
+                conversationId: conversation.id,
+                name: "Main",
+                leafMessageId: null,
+            },
+        });
+
+        return conversation
+    })
 }
 
 /**
@@ -131,4 +150,15 @@ export async function deleteConversation(conversationId: string) {
 
     revalidatePath("/");
     return { id: conversationId };
+}
+
+
+export async function getConversationWithBranch(conversationId: string) {
+  const conversation = await getConversation(conversationId);
+  const branch = await getMainBranch(conversationId);
+
+  return {
+    conversation,
+    branch,
+  };
 }

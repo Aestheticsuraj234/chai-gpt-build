@@ -26,28 +26,77 @@ function toUIMessageParts(
 }
 
 /**
- * Loads all messages for a conversation from the database as AI SDK `UIMessage`s.
+ * Loads the message history for a specific branch from the database.
  *
- * @param conversationId - The conversation whose messages to load.
- * @returns Messages ordered oldest to newest, ready for `useChat`.
+ * Each branch reuses the parent chain from the selected message onward, so the
+ * history before the branch point is preserved without duplicating messages.
  */
 export async function loadChatMessages(
-  conversationId: string
+  conversationId: string,
+  branchId?: string
 ): Promise<UIMessage[]> {
   const rows = await prisma.message.findMany({
     where: { conversationId },
     orderBy: { createdAt: "asc" },
   });
 
-  return rows.map((row) => ({
-    id: row.id,
-    role: row.role === "ASSISTANT" ? "assistant" : "user",
-    parts: toUIMessageParts(row.parts, row.content),
-  }));
+  if (!branchId) {
+    return rows.map((row) => ({
+      id: row.id,
+      role: row.role === "ASSISTANT" ? "assistant" : "user",
+      parts: toUIMessageParts(row.parts, row.content),
+    }));
+  }
+
+  const branch = await prisma.branch.findFirst({
+    where: {
+      id: branchId,
+      conversationId,
+    },
+    select: {
+      leafMessageId: true,
+    },
+  });
+
+  if (!branch?.leafMessageId) {
+    return [];
+  }
+
+  const rowsById = new Map(rows.map((row) => [row.id, row]));
+  const includedIds = new Set<string>();
+  let currentMessageId: string | null = branch.leafMessageId;
+
+  while (currentMessageId) {
+    const current = rowsById.get(currentMessageId);
+    if (!current || includedIds.has(current.id)) {
+      break;
+    }
+
+    includedIds.add(current.id);
+    currentMessageId = current.parentMessageId;
+  }
+
+  return rows
+    .filter((row) => includedIds.has(row.id))
+    .map((row) => ({
+      id: row.id,
+      role: row.role === "ASSISTANT" ? "assistant" : "user",
+      parts: toUIMessageParts(row.parts, row.content),
+    }));
+}
+
+export async function getUserMessageCount(conversationId: string) {
+  return prisma.message.count({
+    where: {
+      conversationId,
+      role: "USER",
+    },
+  });
 }
 
 type SaveChatMessagesOptions = {
   updateTitle?: boolean;
+  branchId?: string;
 };
 
 /**
@@ -56,37 +105,84 @@ type SaveChatMessagesOptions = {
  * @param conversationId - Target conversation ID.
  * @param messages - Messages to persist (system messages are skipped).
  * @param options.updateTitle - When true, auto-titles "New Chat" from the first user message.
+ * @param options.branchId - The active branch that owns the message chain.
  */
 export async function saveChatMessages(
   conversationId: string,
   messages: UIMessage[],
   options: SaveChatMessagesOptions = {}
 ) {
-  const { updateTitle = true } = options;
+  const { updateTitle = true, branchId } = options;
 
-  for (const message of messages) {
-    if (message.role === "system") continue;
+  const branch = branchId
+    ? await prisma.branch.findFirst({
+        where: {
+          id: branchId,
+          conversationId,
+        },
+        select: {
+          id: true,
+          leafMessageId: true,
+        },
+      })
+    : null;
 
-    const content = getMessageText(message);
-    const role = message.role === "assistant" ? "ASSISTANT" : "USER";
-
-    await prisma.message.upsert({
-      where: { id: message.id },
-      create: {
-        id: message.id,
-        conversationId,
-        role,
-        status: "COMPLETE",
-        content,
-        parts: message.parts as Prisma.InputJsonValue,
-      },
-      update: {
-        content,
-        parts: message.parts as Prisma.InputJsonValue,
-        status: "COMPLETE",
-      },
-    });
+  if (branchId && !branch) {
+    throw new Error("Branch not found");
   }
+
+  await prisma.$transaction(async (tx) => {
+    let previousMessageId: string | null = branch?.leafMessageId ?? null;
+
+    for (const message of messages) {
+      if (message.role === "system") continue;
+
+      const content = getMessageText(message);
+      const role = message.role === "assistant" ? "ASSISTANT" : "USER";
+
+      const existingMessage = await tx.message.findUnique({
+        where: { id: message.id },
+        select: { id: true },
+      });
+
+      const parentMessageId = existingMessage ? null : previousMessageId;
+
+      await tx.message.upsert({
+        where: { id: message.id },
+        create: {
+          id: message.id,
+          conversationId,
+          parentMessageId,
+          role,
+          status: "COMPLETE",
+          content,
+          parts: message.parts as Prisma.InputJsonValue,
+        },
+        update: {
+          content,
+          parts: message.parts as Prisma.InputJsonValue,
+          status: "COMPLETE",
+        },
+      });
+
+      if (!existingMessage) {
+        previousMessageId = message.id;
+      }
+    }
+
+    const latestMessage = [...messages]
+      .filter((message) => message.role !== "system")
+      .at(-1);
+
+    if (branch && latestMessage) {
+      await tx.branch.update({
+        where: { id: branch.id },
+        data: {
+          leafMessageId: latestMessage.id,
+        },
+      });
+    }
+  });
 
   const conversation = await prisma.conversation.findUniqueOrThrow({
     where: { id: conversationId },

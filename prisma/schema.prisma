@@ -40,6 +40,7 @@ model Conversation {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   messages Message[]
+  branches Branch[]
 
   @@index([userId, lastMessageAt(sort: Desc)])
   @@index([userId, isPinned, lastMessageAt(sort: Desc)])
@@ -62,17 +63,45 @@ enum MessageStatus {
 model Message {
   id   String @id @default(cuid())
   conversationId String
+  parentMessageId String?
+
+  parent Message? @relation("MessageTree", fields: [parentMessageId], references: [id])
+  children Message[] @relation("MessageTree")
+
   role MessageRole
-   status         MessageStatus @default(COMPLETE)
-   content        String @db.Text
-   parts          Json?  // 
-   metadata       Json? 
+  status         MessageStatus @default(COMPLETE)
+  content        String @db.Text
+  parts          Json?  // 
+  metadata       Json? 
 
-   conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-   createdAt DateTime @default(now())
-   updatedAt DateTime @updatedAt
+  branchLeaves Branch[] @relation("BranchLeaf")
 
-   @@index([conversationId, createdAt(sort: Desc)])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([conversationId, createdAt(sort: Desc)])
+
+  @@index([parentMessageId])
    
+}
+
+
+model Branch {
+  id String @id @default(cuid())
+  conversationId String
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  name String @default("Main")
+
+  leafMessageId String?
+  leafMessage Message? @relation("BranchLeaf", fields: [leafMessageId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([conversationId])
+
+  @@index([leafMessageId])
 }
