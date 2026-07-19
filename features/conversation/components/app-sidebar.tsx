@@ -3,14 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  MoonIcon,
   MoreHorizontalIcon,
   PencilIcon,
   PinIcon,
   PinOffIcon,
   PlusIcon,
+  SunIcon,
+  LogOutIcon,
   Trash2Icon,
 } from "lucide-react";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useClerk } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
@@ -72,9 +76,9 @@ export function AppSidebar() {
               className="font-semibold tracking-tight"
               render={<Link href="/" />}
             >
-              <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground">
+              {/* <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground">
                 C
-              </span>
+              </span> */}
               <span>ChaiGPT</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -227,6 +231,8 @@ function ChatItem({
 /** Footer menu with theme toggle and Clerk user account button. */
 function SidebarFooterMenu() {
   const { resolvedTheme, setTheme } = useTheme();
+  const router = useRouter();
+  const clerk = useClerk();
 
   return (
     <SidebarMenu>
@@ -234,11 +240,16 @@ function SidebarFooterMenu() {
         <Button
           type="button"
           variant="ghost"
-          size="sm"
-          className="w-full justify-start"
+          size="icon"
+          className="h-9 w-9"
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          aria-label="Toggle theme"
         >
-          Toggle theme
+          {resolvedTheme === "dark" ? (
+            <SunIcon className="h-4 w-4" />
+          ) : (
+            <MoonIcon className="h-4 w-4" />
+          )}
         </Button>
       </SidebarMenuItem>
       <SidebarMenuItem>
@@ -253,6 +264,23 @@ function SidebarFooterMenu() {
           <span className="truncate text-sm text-muted-foreground group-data-[collapsible=icon]:hidden">
             Account
           </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={async () => {
+              try {
+                await clerk.signOut();
+              } catch (e) {
+                // ignore
+              }
+              router.push("/sign-in");
+            }}
+            aria-label="Sign out"
+          >
+            <LogOutIcon className="h-4 w-4" />
+          </Button>
         </div>
       </SidebarMenuItem>
     </SidebarMenu>

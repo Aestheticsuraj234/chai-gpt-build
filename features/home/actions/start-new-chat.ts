@@ -12,6 +12,20 @@ import { prisma } from "@/lib/db";
 export async function startNewChat(){
     const user = await requireUser();
 
+    const existingConversation = await prisma.conversation.findFirst({
+        where: {
+            userId: user.id,
+            title: "New Chat",
+            isArchived: false,
+            messages: { none: {} },
+        },
+        orderBy: { createdAt: "desc" },
+    });
+
+    if (existingConversation) {
+        return existingConversation.id;
+    }
+
     const conversation = await prisma.conversation.create({
         data:{
             userId:user.id,

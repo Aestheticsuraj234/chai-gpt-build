@@ -12,9 +12,11 @@ const RootGrouplayout = async ({ children }: { children: React.ReactNode }) => {
     await onBoard();
 
     return (
-        <ChatShell>
-            {children}
-        </ChatShell>
+        <div className="h-screen overflow-hidden">
+            <ChatShell>
+                {children}
+            </ChatShell>
+        </div>
     )
 }
 

@@ -1,13 +1,11 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
+import { clerkMiddleware } from '@clerk/nextjs/server'
 
-const isPublicRoute = createRouteMatcher(["/sign-in(.*)"])
-
-/** Clerk authentication middleware; protects all routes except sign-in. */
-export default clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) {
-    await auth.protect()
-  }
-})
+/**
+ * Initializes Clerk for each matching request. Authentication and
+ * authorization happen next to the protected data/routes, rather than by
+ * matching URL strings here.
+ */
+export default clerkMiddleware()
 
 /** Next.js middleware matcher — runs on app routes, API routes, and Clerk endpoints. */
 export const config = {

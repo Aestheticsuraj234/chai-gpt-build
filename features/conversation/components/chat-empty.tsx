@@ -11,7 +11,7 @@ import {
 /** Empty-state placeholder shown before the first message is sent. */
 export function ChatEmpty() {
   return (
-    <div className="flex flex-1 items-center justify-center px-4">
+    <div className="flex h-full min-h-0 flex-1 items-center justify-center px-4 py-8 sm:py-10">
       <Empty className="border-0">
         <EmptyHeader>
           <EmptyMedia variant="icon">
