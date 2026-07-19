@@ -10,9 +10,11 @@ import {
   PinOffIcon,
   PlusIcon,
   SunIcon,
+  LogOutIcon,
   Trash2Icon,
 } from "lucide-react";
-import { UserButton } from "@clerk/nextjs";
+import { UserButton, useClerk } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
@@ -229,6 +231,8 @@ function ChatItem({
 /** Footer menu with theme toggle and Clerk user account button. */
 function SidebarFooterMenu() {
   const { resolvedTheme, setTheme } = useTheme();
+  const router = useRouter();
+  const clerk = useClerk();
 
   return (
     <SidebarMenu>
@@ -260,6 +264,23 @@ function SidebarFooterMenu() {
           <span className="truncate text-sm text-muted-foreground group-data-[collapsible=icon]:hidden">
             Account
           </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={async () => {
+              try {
+                await clerk.signOut();
+              } catch (e) {
+                // ignore
+              }
+              router.push("/sign-in");
+            }}
+            aria-label="Sign out"
+          >
+            <LogOutIcon className="h-4 w-4" />
+          </Button>
         </div>
       </SidebarMenuItem>
     </SidebarMenu>
