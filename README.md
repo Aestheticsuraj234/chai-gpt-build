@@ -72,7 +72,7 @@ Web search is available as a tool in the chat experience to provide context-awar
 
 ## Project Link
 
-Share this project with your users at: **[PROJECT LINK]**
+Share this project with your users at: **[\[PROJECT LINK\]](https://chai-gpt-build-rho.vercel.app/)**
 
 Replace `PROJECT LINK` with the public URL you want to share.
 
