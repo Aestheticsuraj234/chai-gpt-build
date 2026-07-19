@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  MoonIcon,
   MoreHorizontalIcon,
   PencilIcon,
   PinIcon,
   PinOffIcon,
   PlusIcon,
+  SunIcon,
   Trash2Icon,
 } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
@@ -72,9 +74,9 @@ export function AppSidebar() {
               className="font-semibold tracking-tight"
               render={<Link href="/" />}
             >
-              <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground">
+              {/* <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground">
                 C
-              </span>
+              </span> */}
               <span>ChaiGPT</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -234,11 +236,16 @@ function SidebarFooterMenu() {
         <Button
           type="button"
           variant="ghost"
-          size="sm"
-          className="w-full justify-start"
+          size="icon"
+          className="h-9 w-9"
           onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          aria-label="Toggle theme"
         >
-          Toggle theme
+          {resolvedTheme === "dark" ? (
+            <SunIcon className="h-4 w-4" />
+          ) : (
+            <MoonIcon className="h-4 w-4" />
+          )}
         </Button>
       </SidebarMenuItem>
       <SidebarMenuItem>

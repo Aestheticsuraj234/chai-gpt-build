@@ -79,17 +79,14 @@ export async function listConversations(): Promise<ConversationListItem[]> {
 export async function createConversation(title = "New Chat") {
     const user = await requireUser();
 
-    // return prisma.conversation.create({
-    //     data: {
-    //         userId: user.id,
-    //         title: title.trim() || "New Chat",
-    //     },
-    // });
+    const normalizedTitle = title.trim();
+    const fallbackTitle = normalizedTitle || "New Chat";
+
     return prisma.$transaction(async (tx) => {
         const conversation = await tx.conversation.create({
             data: {
                 userId: user.id,
-                title: title.trim() || "New Chat"
+                title: fallbackTitle
             }
         })
 

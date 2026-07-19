@@ -39,12 +39,13 @@ export function ChatMessages({ messages, status, onCreateBranch }: ChatMessagesP
 
   return (
     <Conversation>
-      <ConversationContent className="py-8">
+      <ConversationContent className="py-8 px-4 md:px-12 lg:px-24 xl:px-42">
         {messages.map((message) => (
           <Message key={message.id} from={message.role}>
             <MessageContent>
-              <div className="mb-2 flex items-center justify-end">
-                {message.role !== "system" ? (
+              <MessageResponse>{getMessageText(message)}</MessageResponse>
+              {message.role === "assistant" ? (
+                <div className="mt-3 flex justify-start">
                   <Button
                     type="button"
                     variant="ghost"
@@ -55,9 +56,8 @@ export function ChatMessages({ messages, status, onCreateBranch }: ChatMessagesP
                     <GitBranchPlus className="mr-1 h-3.5 w-3.5" />
                     Branch
                   </Button>
-                ) : null}
-              </div>
-              <MessageResponse>{getMessageText(message)}</MessageResponse>
+                </div>
+              ) : null}
             </MessageContent>
           </Message>
         ))}

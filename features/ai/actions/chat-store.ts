@@ -196,14 +196,15 @@ export async function saveChatMessages(
   const firstUser = messages.find((message) => message.role === "user");
   const firstUserText = firstUser ? getMessageText(firstUser).trim() : "";
 
+  const nextTitle = updateTitle && conversation.title === "New Chat" && firstUserText
+    ? firstUserText.replace(/\s+/g, " ").trim().slice(0, 48)
+    : conversation.title;
+
   await prisma.conversation.update({
     where: { id: conversationId },
     data: {
       lastMessageAt: new Date(),
-      title:
-        updateTitle && conversation.title === "New Chat" && firstUserText
-          ? firstUserText.slice(0, 48)
-          : conversation.title,
+      title: nextTitle || "New Chat",
     },
   });
 }

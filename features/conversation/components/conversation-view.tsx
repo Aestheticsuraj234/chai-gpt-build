@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { PencilLine, Trash2 } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { createBranchForMessage, deleteBranch, getConversationBranches, renameBranch } from '@/features/branch/actions/branch-actions';
 import { useQueryClient } from '@tanstack/react-query';
@@ -132,27 +133,27 @@ export const ConversationView = ({ conversationId, initialMessages, branchId }: 
 
     return (
         <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-            <header className="flex h-14 shrink-0 items-center gap-2 border-b px-3">
+            <header className="flex h-14 shrink-0 items-center gap-2 border-b px-2 sm:px-3">
                 <SidebarTrigger />
                 <Separator orientation="vertical" className="mx-1 h-4" />
                 <div className="flex min-w-0 flex-1 items-center gap-2">
-                    <h1 className="truncate text-sm font-medium">{title}</h1>
-                    <div className="ml-auto flex items-center gap-2">
+                    <h1 className="min-w-0 flex-1 truncate text-sm font-medium">{title}</h1>
+                    <div className="ml-auto flex min-w-0 items-center gap-1.5">
                         <select
                             value={branchId}
                             onChange={(event) => router.push(`/c/${conversationId}?branchId=${event.target.value}`)}
                             disabled={isBranchLoading}
-                            className="h-8 w-[170px] rounded-md border border-input bg-background px-2 text-sm"
+                            className="h-8 min-w-0 max-w-[120px] rounded-md border border-input bg-background px-2 text-sm sm:max-w-[160px]"
                         >
                             {branches.map((item) => (
                                 <option key={item.id} value={item.id}>{item.name}</option>
                             ))}
                         </select>
-                        <Button variant="outline" size="sm" onClick={() => void handleRenameBranch()}>
-                            Rename
+                        <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => void handleRenameBranch()} aria-label="Rename branch">
+                            <PencilLine className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => void handleDeleteBranch()}>
-                            Delete
+                        <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={() => void handleDeleteBranch()} aria-label="Delete branch">
+                            <Trash2 className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>

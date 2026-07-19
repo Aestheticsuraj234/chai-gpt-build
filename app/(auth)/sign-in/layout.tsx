@@ -5,10 +5,10 @@ import React from 'react'
  */
 const AuthLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <section className='flex flex-col h-screen items-center justify-center '>
-        <div className='w-full max-w-md'>
-            {children}
-        </div>
+    <section className='flex min-h-screen items-center justify-center bg-slate-950 '>
+      <div className='w-full bg-slate-950/95 p-4 shadow-xl shadow-black/20 sm:p-6'>
+        {children}
+      </div>
     </section>
   )
 }
