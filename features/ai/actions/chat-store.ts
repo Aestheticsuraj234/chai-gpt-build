@@ -42,7 +42,7 @@ export async function loadChatMessages(
   });
 
   if (!branchId) {
-    return rows.map((row: any) => ({
+    return rows.map((row) => ({
       id: row.id,
       role: row.role === "ASSISTANT" ? "assistant" : "user",
       parts: toUIMessageParts(row.parts, row.content),
@@ -63,7 +63,10 @@ export async function loadChatMessages(
     return [];
   }
 
-  const rowsById = new Map(rows.map((row: any) => [row.id, row]));
+  // const rowsById = new Map(rows.map((row: any) => [row.id, row]));
+  const rowsById: Map<string, (typeof rows)[number]> = new Map(
+    rows.map((row) => [row.id, row])
+  );
   const includedIds = new Set<string>();
   let currentMessageId: string | null = branch.leafMessageId;
 
@@ -78,8 +81,8 @@ export async function loadChatMessages(
   }
 
   return rows
-    .filter((row: any) => includedIds.has(row.id))
-    .map((row: any) => ({
+    .filter((row) => includedIds.has(row.id))
+    .map((row) => ({
       id: row.id,
       role: row.role === "ASSISTANT" ? "assistant" : "user",
       parts: toUIMessageParts(row.parts, row.content),
@@ -117,15 +120,15 @@ export async function saveChatMessages(
 
   const branch = branchId
     ? await prisma.branch.findFirst({
-        where: {
-          id: branchId,
-          conversationId,
-        },
-        select: {
-          id: true,
-          leafMessageId: true,
-        },
-      })
+      where: {
+        id: branchId,
+        conversationId,
+      },
+      select: {
+        id: true,
+        leafMessageId: true,
+      },
+    })
     : null;
 
   if (branchId && !branch) {
