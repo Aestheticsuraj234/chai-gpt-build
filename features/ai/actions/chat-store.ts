@@ -4,6 +4,7 @@ import { isTextUIPart, type UIMessage } from "ai";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/db";
 
+
 /** Extracts plain text from an AI SDK `UIMessage` by joining all text parts. */
 function getMessageText(message: UIMessage) {
   return message.parts.filter(isTextUIPart).map((part) => part.text).join("");
@@ -41,7 +42,7 @@ export async function loadChatMessages(
   });
 
   if (!branchId) {
-    return rows.map((row) => ({
+    return rows.map((row: any) => ({
       id: row.id,
       role: row.role === "ASSISTANT" ? "assistant" : "user",
       parts: toUIMessageParts(row.parts, row.content),
@@ -62,7 +63,7 @@ export async function loadChatMessages(
     return [];
   }
 
-  const rowsById = new Map(rows.map((row) => [row.id, row]));
+  const rowsById = new Map(rows.map((row: any) => [row.id, row]));
   const includedIds = new Set<string>();
   let currentMessageId: string | null = branch.leafMessageId;
 
@@ -77,8 +78,8 @@ export async function loadChatMessages(
   }
 
   return rows
-    .filter((row) => includedIds.has(row.id))
-    .map((row) => ({
+    .filter((row: any) => includedIds.has(row.id))
+    .map((row: any) => ({
       id: row.id,
       role: row.role === "ASSISTANT" ? "assistant" : "user",
       parts: toUIMessageParts(row.parts, row.content),
