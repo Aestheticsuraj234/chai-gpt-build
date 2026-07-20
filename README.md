@@ -2,6 +2,32 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### 1. Database Setup (Chat Branching)
+The chat branching feature stores messages in a tree structure using PostgreSQL. To initialize the local database:
+
+1. Make sure you have Docker installed.
+2. Start the Postgres container:
+   ```bash
+   docker compose up -d
+   ```
+3. Push the Prisma schema to the database and generate the client:
+   ```bash
+   bunx prisma db push
+   bunx prisma generate
+   ```
+
+### 2. Environment Variables (AI Tools)
+You need to set up the appropriate environment variables for the AI Tools (like Web Search) to function properly.
+
+1. Create a `.env.local` file in the root of the project.
+2. Add your Tavily API key for the web search tool, and your local Database URL:
+   ```env
+   TAVILY_API_KEY=your_tavily_api_key_here
+   DATABASE_URL=postgresql://myuser:mypassword@localhost:5433/mydb?schema=public
+   ```
+
+### 3. Run the Development Server
+
 First, run the development server:
 
 ```bash
