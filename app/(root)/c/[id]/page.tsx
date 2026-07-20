@@ -14,8 +14,9 @@ type ConversationPageProps = {
 const page = async({params}:ConversationPageProps) => {
     const {id} = await params;
 
+    let conversation;
     try {
-      await getConversation(id)
+      conversation = await getConversation(id)
     } catch (error) {
       notFound()
     }
@@ -28,6 +29,7 @@ const page = async({params}:ConversationPageProps) => {
       key={id}
       conversationId={id}
       initialMessages={initialMessages}
+      currentNodeId={conversation.currentNodeId}
     />
   )
 }

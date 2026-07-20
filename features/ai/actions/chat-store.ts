@@ -1,6 +1,7 @@
 "use server";
 
 import { isTextUIPart, type UIMessage } from "ai";
+import { type MessageNode } from "@/lib/utils/tree";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/db";
 
@@ -33,7 +34,7 @@ function toUIMessageParts(
  */
 export async function loadChatMessages(
   conversationId: string
-): Promise<UIMessage[]> {
+): Promise<MessageNode[]> {
   const rows = await prisma.message.findMany({
     where: { conversationId },
     orderBy: { createdAt: "asc" },
@@ -43,6 +44,7 @@ export async function loadChatMessages(
     id: row.id,
     role: row.role === "ASSISTANT" ? "assistant" : "user",
     parts: toUIMessageParts(row.parts, row.content),
+    parentId: row.parentId,
   }));
 }
 
@@ -59,7 +61,7 @@ type SaveChatMessagesOptions = {
  */
 export async function saveChatMessages(
   conversationId: string,
-  messages: UIMessage[],
+  messages: MessageNode[],
   options: SaveChatMessagesOptions = {}
 ) {
   const { updateTitle = true } = options;
@@ -79,6 +81,7 @@ export async function saveChatMessages(
         status: "COMPLETE",
         content,
         parts: message.parts as Prisma.InputJsonValue,
+        parentId: message.parentId,
       },
       update: {
         content,
@@ -100,6 +103,7 @@ export async function saveChatMessages(
     where: { id: conversationId },
     data: {
       lastMessageAt: new Date(),
+      currentNodeId: messages.length > 0 ? messages[messages.length - 1].id : undefined,
       title:
         updateTitle && conversation.title === "New Chat" && firstUserText
           ? firstUserText.slice(0, 48)

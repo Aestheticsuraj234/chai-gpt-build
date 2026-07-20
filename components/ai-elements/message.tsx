@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Loader } from "./loader";
 import {
   ButtonGroup,
   ButtonGroupText,
@@ -383,3 +384,38 @@ export const MessageToolbar = ({
     {children}
   </div>
 );
+
+/** Props for the tool badge. */
+export type ToolBadgeProps = HTMLAttributes<HTMLDivElement> & {
+  toolName: string;
+  state: "loading" | "complete";
+};
+
+/** Shows the loading/completed state of an AI tool execution. */
+export const ToolBadge = ({
+  toolName,
+  state,
+  className,
+  ...props
+}: ToolBadgeProps) => (
+  <div
+    className={cn(
+      "flex w-fit items-center gap-2 rounded-md border bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground",
+      className
+    )}
+    {...props}
+  >
+    {state === "loading" ? (
+      <span className="flex items-center gap-2">
+        <Loader className="size-3" />
+        Calling {toolName}...
+      </span>
+    ) : (
+      <span className="flex items-center gap-2">
+        <span className="size-1.5 rounded-full bg-green-500" />
+        {toolName} complete
+      </span>
+    )}
+  </div>
+);
+

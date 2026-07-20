@@ -4,6 +4,7 @@ import { requireUser } from "@/features/auth/action/require-user";
 import { prisma } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { convertToModelMessages, createIdGenerator, createUIMessageStream, createUIMessageStreamResponse, streamText, toUIMessageStream, type UIMessage } from "ai";
+import { searchTool, datetimeTool, weatherTool } from "@/lib/tools";
 /**
  * POST /api/chat — Streams an AI assistant reply for a conversation.
  *
@@ -48,6 +49,7 @@ export async function POST(req: Request) {
         model: getChatModel(conversation.model),
         system: conversation.systemPrompt ?? "You are ChaiGpt , a helpful assistant",
         messages: await convertToModelMessages(messages),
+        tools: { search: searchTool, datetime: datetimeTool, weather: weatherTool },
     });
 
     result.consumeStream();
@@ -59,6 +61,11 @@ export async function POST(req: Request) {
            generateMessageId:createIdGenerator({prefix:"msg" , size:16}),
            onEnd:async({messages:finalMessages})=>{
             try {
+                const newAiMessage = finalMessages[finalMessages.length - 1] as any;
+                const userMessage = finalMessages[finalMessages.length - 2];
+                if (newAiMessage && userMessage && newAiMessage.role === "assistant") {
+                    newAiMessage.parentId = userMessage.id;
+                }
                 await saveChatMessages(id , finalMessages , {updateTitle:false})
             } catch (error) {
                 console.error(error);
